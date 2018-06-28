@@ -26,6 +26,8 @@ public class Sound.Indicator : Wingpanel.Indicator {
     private Notify.Notification notification;
     private Services.Settings settings;
     private Services.VolumeControlPulse volume_control;
+    private Sound.OutputControl oc;
+    private DeviceWidget output_devices;
 
     bool open = false;
     bool mute_blocks_sound = false;
@@ -39,7 +41,7 @@ public class Sound.Indicator : Wingpanel.Indicator {
     public Indicator () {
         Object (code_name: Wingpanel.Indicator.SOUND,
                 display_name: _("Indicator Sound"),
-                description: _("The sound indicator"));        
+                description: _("The sound indicator"));
     }
 
     construct {
@@ -55,6 +57,12 @@ public class Sound.Indicator : Wingpanel.Indicator {
         volume_control.notify["is-playing"].connect(on_is_playing_change);
         volume_control.notify["is-listening"].connect(update_mic_visibility);
 
+        output_devices = new DeviceWidget ();
+        oc = new Sound.OutputControl ();
+        oc.new_device.connect (output_devices.add_device);
+        oc.notify["default-output"].connect (output_devices.on_server_change);
+        // oc.device_removed.connect (output_devices.add_device);
+
         Notify.init ("wingpanel-indicator-sound");
 
         notification = new Notify.Notification ("indicator-sound", "", "");
@@ -62,7 +70,7 @@ public class Sound.Indicator : Wingpanel.Indicator {
 
         settings = new Services.Settings ();
         settings.notify["max-volume"].connect (set_max_volume);
-    
+
         var locale = Intl.setlocale (LocaleCategory.MESSAGES, null);
 
         display_widget.button_press_event.connect ((e) => {
@@ -307,6 +315,8 @@ public class Sound.Indicator : Wingpanel.Indicator {
             set_max_volume ();
 
             main_grid.attach (volume_scale, 0, position++, 1, 1);
+
+            main_grid.attach (output_devices, 0, position++, 1, 1);
 
             main_grid.attach (new Wingpanel.Widgets.Separator (), 0, position++, 1, 1);
 

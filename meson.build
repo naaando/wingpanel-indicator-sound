@@ -26,6 +26,7 @@ asresources = gnome.compile_resources(
 shared_module(
     meson.project_name(),
     'src/Indicator.vala',
+    'src/Widgets/DeviceWidget.vala',
     'src/Widgets/DisplayWidget.vala',
     'src/Widgets/MaxWidthLabel.vala',
     'src/Widgets/Scale.vala',
@@ -38,6 +39,9 @@ shared_module(
     'src/Services/Adapter.vala',
     'src/Services/Device.vala',
     'src/Services/MediaPlayer.vala',
+    'src/PulseAudio/Device.vala',
+    'src/PulseAudio/Connection.vala',
+    'src/PulseAudio/OutputControl.vala',
     asresources,
     dependencies: [
         dependency('glib-2.0'),
