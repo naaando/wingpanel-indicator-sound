@@ -3,7 +3,7 @@ public class Sound.OutputControl : Object {
     PulseAudioConnection con;
     public Gee.HashMap<uint32, Device> output_devices;
     public Device default_output { get; private set; }
-    public signal void new_device (Device dev);
+    public signal void new_device (OutputControl opc, Device dev);
 
     construct {
         con = new Sound.PulseAudioConnection ();
@@ -25,14 +25,27 @@ public class Sound.OutputControl : Object {
     }
 
     public void set_default_device (Device dev) {
-        if (!dev.input) {
-            con.context.set_default_sink (dev.name, null);
+        if (dev != null && !dev.input) {
+            var op = con.context.set_default_sink (dev.name);
+            if (op != null) {
+                default_output = dev;
+                PulseAudio.ext_stream_restore_read (con.context, (context, info, eol) => {
+                    if (eol != 0 || !info.name.has_prefix ("sink-input-by")) {
+                        return;
+                    }
+
+                    // We need to duplicate the info but with the right device name
+                    var new_info = PulseAudio.ExtStreamRestoreInfo ();
+                    new_info.name = info.name;
+                    new_info.channel_map = info.channel_map;
+                    new_info.volume = info.volume;
+                    new_info.mute = info.mute;
+                    new_info.device = default_output.name;
+                    PulseAudio.ext_stream_restore_write (context, PulseAudio.UpdateMode.REPLACE, {new_info}, 1, null);
+                });
+            }
         }
     }
-
-    // public Device get_default_device () {
-    //     context.set_default_sink (device.name, null);
-    // }
 
     private void subscribe_callback (PulseAudio.Context context, PulseAudio.Context.SubscriptionEventType t, uint32 index) {
         var source_type = t & PulseAudio.Context.SubscriptionEventType.FACILITY_MASK;
@@ -44,9 +57,7 @@ public class Sound.OutputControl : Object {
                         return;
 
                     foreach (var device in output_devices) {
-                        debug (server_info.default_sink_name);
                         if (device.name == server_info.default_sink_name) {
-                            debug (device.name);
                             default_output = device;
                         }
                     }
@@ -86,7 +97,10 @@ public class Sound.OutputControl : Object {
     }
 
     private void add_sink (Device device) {
-        debug ("Adding device "+device.display_name);
+        if (device == null) {
+            return;
+        }
+
         if (output_devices.has_key (device.index)) {
             debug ("Device index has already taken, overwriting");
         }
@@ -96,6 +110,6 @@ public class Sound.OutputControl : Object {
             default_output = device;
         }
 
-        new_device (device);
+        new_device (this, device);
     }
 }
