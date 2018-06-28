@@ -41,7 +41,8 @@ public class DeviceWidget : Gtk.Box {
             return;
         }
 
-        var rbtn = new Gtk.RadioButton.with_label_from_widget (last_button, device.display_name);
+        int max_len = 38;
+        var rbtn = new Gtk.RadioButton.with_label_from_widget (last_button, device.display_name.length < max_len ? device.display_name : device.display_name[0:max_len]);
         last_button = rbtn;
         rbtn.toggled.connect (() => {
             opc.set_default_device (device);
