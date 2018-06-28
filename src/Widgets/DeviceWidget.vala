@@ -7,7 +7,7 @@ public class DeviceWidget : Gtk.Box {
     construct {
         orientation = Gtk.Orientation.VERTICAL;
         list = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
-        list.margin_left = list.margin_right = 6 + (list.margin_top = list.margin_end = 6);
+        list.margin_start = list.margin_end = 6 + (list.margin_top = list.margin_end = 6);
         devices = new Gee.HashMap<uint32, Gtk.RadioButton> ();
 
         var revealer = new Gtk.Revealer ();
@@ -24,7 +24,7 @@ public class DeviceWidget : Gtk.Box {
         add (revealer);
     }
 
-    public void on_server_change (Object obj, ParamSpec spec) {
+    public void on_server_change (Object obj, ParamSpec? spec = null) {
         var opc = (Sound.OutputControl) obj;
         var device = opc.default_output;
         if (device == null) {
@@ -36,11 +36,15 @@ public class DeviceWidget : Gtk.Box {
         }
     }
 
-    public void add_device (Sound.Device device) {
+    public void add_device (Sound.OutputControl opc, Sound.Device device) {
+        if (device == null) {
+            return;
+        }
+
         var rbtn = new Gtk.RadioButton.with_label_from_widget (last_button, device.display_name);
         last_button = rbtn;
-        rbtn.clicked.connect (() => {
-            debug ("active button " + device.display_name);
+        rbtn.toggled.connect (() => {
+            opc.set_default_device (device);
         });
 
         devices.set (device.index, rbtn);

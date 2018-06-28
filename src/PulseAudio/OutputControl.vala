@@ -52,16 +52,7 @@ public class Sound.OutputControl : Object {
 
         switch (source_type) {
             case PulseAudio.Context.SubscriptionEventType.SERVER:
-                context.get_server_info ((context, server_info) => {
-                    if (server_info == null)
-                        return;
-
-                    foreach (var device in output_devices) {
-                        if (device.name == server_info.default_sink_name) {
-                            default_output = device;
-                        }
-                    }
-                });
+                update_default ();
                 break;
             case PulseAudio.Context.SubscriptionEventType.SINK:
             case PulseAudio.Context.SubscriptionEventType.SINK_INPUT:
@@ -106,10 +97,21 @@ public class Sound.OutputControl : Object {
         }
 
         output_devices.set (device.index, device);
-        if (device.is_default) {
-            default_output = device;
-        }
+        update_default ();
 
         new_device (this, device);
+    }
+
+    private void update_default () {
+        con.context.get_server_info ((context, server_info) => {
+            if (server_info == null)
+                return;
+
+            foreach (var device in output_devices) {
+                if (device.name == server_info.default_sink_name) {
+                    default_output = device;
+                }
+            }
+        });
     }
 }
