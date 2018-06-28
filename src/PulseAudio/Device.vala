@@ -51,7 +51,7 @@ public class Sound.Device : GLib.Object {
 
     public Device.from_sink_info (PulseAudio.SinkInfo info) {
         Object (index: info.index);
-        input = true;
+        input = false;
         name = info.name;
         display_name = info.description;
         is_muted = (info.mute != 0);
